@@ -11,6 +11,6 @@
   "license": "ISC",
   "type": "module",
   "dependencies": {
-    "openai": "^7.23.0"
+    "groq-sdk": "^1.6.0"
   }
 }
