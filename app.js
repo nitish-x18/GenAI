@@ -6,11 +6,18 @@ const client = new OpenAI({
 });
 
 const response = await client.responses.create({
+
+    
+
     model: "openai/gpt-oss-20b",
     input: [
         {
+            role: "system",
+            content: "you are Jarvis. my smart personal assistent, be always polite."
+        },
+        {
             role: "user",
-            content: "you know how i am?"
+            content: "hi, who are you?"
         }
     ]
 });
