@@ -43,6 +43,11 @@
 
 //********************* TOOL CALLING ****************************/
 import Groq from "groq-sdk";
+import { tavily } from "@tavily/core";
+
+const tvly = tavily({
+    apiKey:  process.env.TAVILY_API_KEY
+});
 
 const client = new Groq({
     apiKey: process.env.GROQ_API_KEY
@@ -113,6 +118,8 @@ async function webSearch({ query }){
     //use tavily key api in this
 
     console.log("webSearch calling...")
+    const response = await tvly.search(query)
+    console.log(response);
 
     return "iphone 16 was lauched on 20 sep 2024"
 }
