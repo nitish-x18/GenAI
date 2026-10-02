@@ -45,81 +45,136 @@
 import Groq from "groq-sdk";
 import { tavily } from "@tavily/core";
 
-const tvly = tavily({
-    apiKey:  process.env.TAVILY_API_KEY
+const client = new Groq({
+    apikey: process.env.GROQ_API_KEY
 });
 
-const client = new Groq({
-    apiKey: process.env.GROQ_API_KEY
+const tvly = tavily({
+    apiKey: process.env.TAVILY_API_KEY
 });
 
 async function main() {
-    const response = await client.chat.completions.create({
-        model: "openai/gpt-oss-20b",
-        messages: [
+
+    const messages = [
             {
                 role: "system",
-                content: "you are Jarvis. my smart personal assistent, be always polite. you have access to use tool 1. webSearch"
+                content: `You are the Jarvis. a smart personal assistent who answers the asked questions.
+                you have to access to following tools:
+                1. webSearch({query}) 
+                //Search the latest information and real time data on internet `
             },
             {
                 role: "user",
-                content: "when was iphone 16 launched"
-            }
-        ],
+                content: "When was iphone 17 launched?"
+            },
+        ]
+
+    const completions = await client.chat.completions.create({
+
+        model: "openai/gpt-oss-20b",
+        temperature: 0,
+        messages: messages,
         tools: [
             {
                 "type": "function",
                 "function": {
                     "name": "webSearch",
-                    "description": "search the latest and real time data on the internet",
+                    "description": "Search the latest information and real time data on internet",
                     "parameters": {
                         // JSON Schema object
                         "type": "object",
                         "properties": {
                             "query": {
                                 "type": "string",
-                                "description": "to search query to perform search"
-                            },
+                                "description": "The search query to perform search on"
+                            }
                         },
                         "required": ["query"]
                     }
                 }
             }
         ],
-        tool_choice: "auto"
-    })
+        tool_choice: 'auto',
 
-    const toolCalls = response.choices[0].message.tool_calls
+    });
 
-    if(!toolCalls) {
-        console.log(`Jarvis: ${response.choices[0].message.content}`)
+    const toolCalls = completions.choices[0].message.tool_calls;
+
+    if(!toolCalls){
+        console.log(`Jarvis: ${completions.choices[0].message.content}`);
+
         return;
     }
-    
-    for(const tool of toolCalls){
-        console.log(`Tool: ${tool}`)
-        const functionName = tool.function.name
-        const functionParams = tool.function.arguments
 
-        if(functionName === "webSearch") {
+    messages.push(completions.choices[0].message)
+
+
+    for(const tool of toolCalls) {
+
+        // console.log("Tool: ", tool)
+
+        const functionName = tool.function.name;
+        const functionParams = tool.function.arguments;
+
+        if(functionName === "webSearch"){
             const toolResult = await webSearch(JSON.parse(functionParams))
-            console.log("ToolResult: ", toolResult)
+            // console.log("ToolResult: ", toolResult)
+
+            messages.push({
+                tool_call_id: tool.id,
+                role: 'tool',
+                name: functionName,
+                content: toolResult
+            })
         }
+
     }
 
-    // console.log(JSON.stringify(response.choices[0].message, null , 2));
+    const completions2 = await client.chat.completions.create({
+
+        model: "openai/gpt-oss-20b",
+        temperature: 0,
+        messages: messages,
+        tools: [
+            {
+                "type": "function",
+                "function": {
+                    "name": "webSearch",
+                    "description": "Search the latest information and real time data on internet",
+                    "parameters": {
+                        // JSON Schema object
+                        "type": "object",
+                        "properties": {
+                            "query": {
+                                "type": "string",
+                                "description": "The search query to perform search on"
+                            }
+                        },
+                        "required": ["query"]
+                    }
+                }
+            }
+        ],
+        tool_choice: 'auto',
+
+    });
+
+    console.log(JSON.stringify(completions2.choices[0].message, null, 2))
 
 }
 
 main();
 
+async function webSearch({ query }) {
+    //here we do tavily api call
+    console.log("Calling webSearch...");
 
-async function webSearch({ query }){
-    //use tavily key api in this
-
-    console.log("webSearch calling...")
     const response = await tvly.search(query)
-    console.log(response);
+    // console.log("Response: ", response);
 
-    return "iphone 16 was lauched on 20 sep 2024"
+    const finalResult = response.results.map(result => result.content).join("\n\n");
+    // console.log("FinalResult: ", finalResult);
+
+    return finalResult;
+
 }
