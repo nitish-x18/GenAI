@@ -4,7 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "node --env-file=.env app.js"
+    "dev": "node --env-file=.env app.js",
+    "server": "node --env-file=.env server.js",
+    "new": "node --env-file=.env new.js"
   },
   "keywords": [],
   "author": "",
@@ -12,6 +14,8 @@
   "type": "module",
   "dependencies": {
     "@tavily/core": "^0.7.13",
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
     "groq-sdk": "^1.6.0"
   }
 }
