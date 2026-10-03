@@ -5,7 +5,7 @@ const askBotton = document.querySelector('#ask');
 input.addEventListener('keyup', handleEnter);
 askBotton.addEventListener('click', handleAsk);
 
-function genrate(text){
+async function genrate(text){
 
     const msg = document.createElement('div')
     msg.className = 'my-6 bg-neutral-800 p-3 rounded-2xl ml-auto max-w-fit'
@@ -14,24 +14,54 @@ function genrate(text){
     chatContainer?.appendChild(msg)
     input.value = '';
 
+    const assistantMessage = await callServer(text);
+
+    const assistantElem = document.createElement('div')
+    assistantElem.className = 'max-w-fit'
+    assistantElem.textContent = assistantMessage
+
+    chatContainer?.appendChild(assistantElem)
+    input.value = '';
+
+
 }
 
-function handleAsk(e){
+async function callServer(inputText){
+    const response = await fetch('http://localhost:3001/chat', {
+        method: "POST",
+        headers: {
+            'content-type': 'application/json'
+        },
+        body: JSON.stringify({
+            message: inputText
+        })
+    });
+
+    if(!response.ok) {
+        throw new Error("Error generating the response.")
+    }
+
+    const result = await response.json()
+    return result.message;
+
+}
+
+async function handleAsk(e){
     const text = input?.value.trim();
     if(!text){
         return;
     }
-    genrate(text);
+    await genrate(text);
 }
 
-function handleEnter(e){
+async function handleEnter(e){
     if(e.key === 'Enter'){
         const text = input?.value.trim();
         if(!text){
             return;
         }
 
-        genrate(text);
+        await genrate(text);
         
     }
 }
