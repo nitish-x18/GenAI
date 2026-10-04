@@ -84,7 +84,17 @@ GENERAL RESPONSE STYLE:
         content: userMessage
     })
 
+    const MAX_RETRIES = 10;
+    let count = 0;
+
     while (true) {
+
+        if(count > MAX_RETRIES) {
+            return 'I Could not find the result, please try again';
+        }
+
+        count++;
+
         const completions = await client.chat.completions.create({
 
             model: "openai/gpt-oss-20b",
