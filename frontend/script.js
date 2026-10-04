@@ -2,11 +2,13 @@ const input = document.querySelector('#input');
 const chatContainer = document.querySelector('#chat-container');
 const askBotton = document.querySelector('#ask');
 
+const threadId = Date.now().toString(36) + Math.random().toString(36).substring(2,8)
+
 input.addEventListener('keyup', handleEnter);
 askBotton.addEventListener('click', handleAsk);
 
 const loading = document.createElement('div');
-loading.className = 'my-6 text-gray-500'
+loading.className = 'my-6 animate-pulse'
 loading.textContent = 'thinking...'
 
 async function genrate(text){
@@ -42,6 +44,7 @@ async function callServer(inputText){
             'content-type': 'application/json'
         },
         body: JSON.stringify({
+            threadId,
             message: inputText
         })
     });
