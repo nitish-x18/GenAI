@@ -1,5 +1,6 @@
 import Groq from "groq-sdk";
 import { tavily } from "@tavily/core";
+import NodeCache from "node-cache";
 
 const client = new Groq({
     apiKey: process.env.GROQ_API_KEY
@@ -9,9 +10,14 @@ const tvly = tavily({
     apiKey: process.env.TAVILY_API_KEY
 });
 
-export async function generate(userMessage) {
+const myCache = new NodeCache({
+    stdTTL: 60 * 60 * 24
+});
 
-    const messages = [
+
+export async function generate(userMessage, threadId) {
+
+    const baseMessages = [
         {
             role: "system",
             content: `You are Jarvis, a smart personal assistant.
@@ -69,7 +75,9 @@ GENERAL RESPONSE STYLE:
         //     role: "user",
         //     content: "are you LLM model"
         // },
-    ]
+    ];
+
+    const messages = myCache.get(threadId) ?? baseMessages;
 
     messages.push({
         role: 'user',
@@ -110,6 +118,8 @@ GENERAL RESPONSE STYLE:
 
         if (!toolCalls) {
             // console.log(`Jarvis: ${completions.choices[0].message.content}`);
+            myCache.set(threadId, messages);
+            console.log(myCache);
             const assistantMessage = completions.choices[0].message;
 
             return assistantMessage.content;
